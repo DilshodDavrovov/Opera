@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: opera_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: opera
+      POSTGRES_USER: opera_user
+      POSTGRES_PASSWORD: opera_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
