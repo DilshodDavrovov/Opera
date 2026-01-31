@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLayout from '../components/AppLayout.vue';
 import {
@@ -98,6 +98,7 @@ import {
   type CreateTransactionDto,
   type Account,
 } from '../api/accounting.api';
+import { formatApiError } from '../utils/errorHandler';
 
 const route = useRoute();
 const organizationId = computed(() => route.params.organizationId as string);
@@ -123,16 +124,22 @@ onMounted(() => {
   loadData();
 });
 
+// Перезагружаем данные при смене организации
+watch(organizationId, () => {
+  loadData();
+});
+
 const loadData = async () => {
   loading.value = true;
   error.value = '';
   try {
+    // Всегда загружаем все счета (включая неактивные) для корректного отображения проводок
     [transactions.value, accounts.value] = await Promise.all([
       accountingApi.getTransactions(organizationId.value),
-      accountingApi.getAccounts(organizationId.value),
+      accountingApi.getAccounts(organizationId.value, true), // includeInactive = true
     ]);
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Ошибка загрузки данных';
+    error.value = formatApiError(err);
   } finally {
     loading.value = false;
   }
@@ -199,7 +206,7 @@ const handleSubmit = async () => {
     closeModal();
     await loadData();
   } catch (err: any) {
-    formError.value = err.response?.data?.message || 'Ошибка сохранения проводки';
+    formError.value = formatApiError(err);
   } finally {
     submitting.value = false;
   }

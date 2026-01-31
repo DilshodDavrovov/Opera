@@ -27,6 +27,13 @@
             <h3>Проводки</h3>
             <p>Создание и управление проводками</p>
           </router-link>
+          <router-link
+            :to="`/organizations/${currentOrganization.id}/reports`"
+            class="action-card"
+          >
+            <h3>Отчеты</h3>
+            <p>Баланс, прибыли и убытки, движение денежных средств</p>
+          </router-link>
         </div>
       </div>
 
@@ -64,6 +71,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AppLayout from '../components/AppLayout.vue';
 import { useOrganizationsStore } from '../stores/organizations';
+import { formatApiError } from '../utils/errorHandler';
 
 const router = useRouter();
 const organizationsStore = useOrganizationsStore();
@@ -88,7 +96,7 @@ const handleCreateOrganization = async () => {
     showCreateModal.value = false;
     newOrgName.value = '';
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Ошибка создания организации';
+    error.value = formatApiError(err);
   } finally {
     loading.value = false;
   }

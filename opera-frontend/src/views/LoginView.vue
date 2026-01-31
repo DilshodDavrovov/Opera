@@ -45,10 +45,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useOrganizationsStore } from '../stores/organizations';
+import { formatApiError } from '../utils/errorHandler';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -67,11 +68,27 @@ const handleLogin = async () => {
   error.value = '';
 
   try {
+    // Выполняем логин
     await authStore.login(form.value);
-    await organizationsStore.loadOrganizations();
-    router.push('/');
+    
+    // Ждем обновления реактивного состояния и localStorage
+    await nextTick();
+    
+    // Небольшая задержка для гарантии, что токен установлен
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Загружаем организации
+    try {
+      await organizationsStore.loadOrganizations();
+    } catch (orgError) {
+      // Игнорируем ошибки загрузки организаций, они не критичны для входа
+      console.warn('Failed to load organizations:', orgError);
+    }
+    
+    // Используем replace вместо push, чтобы избежать возврата на страницу логина при нажатии "назад"
+    await router.replace('/');
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Ошибка входа. Проверьте данные.';
+    error.value = formatApiError(err);
   } finally {
     loading.value = false;
   }

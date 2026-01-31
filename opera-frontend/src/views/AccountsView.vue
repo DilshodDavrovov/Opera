@@ -3,9 +3,19 @@
     <div class="accounts-view">
       <div class="page-header">
         <h1>Бухгалтерские счета</h1>
-        <button @click="showCreateModal = true" class="btn-primary">
-          Создать счет
-        </button>
+        <div class="header-actions">
+          <label class="checkbox-label">
+            <input
+              v-model="showInactive"
+              type="checkbox"
+              @change="loadAccounts"
+            />
+            Показать неактивные
+          </label>
+          <button @click="showCreateModal = true" class="btn-primary">
+            Создать счет
+          </button>
+        </div>
       </div>
 
       <div v-if="loading" class="loading">Загрузка...</div>
@@ -24,7 +34,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="account in accounts" :key="account.id">
+          <tr
+            v-for="account in accounts"
+            :key="account.id"
+            :class="{ 'row-inactive': !account.isActive }"
+          >
             <td>{{ account.code }}</td>
             <td>{{ account.name }}</td>
             <td>{{ accountTypeLabels[account.type] }}</td>
@@ -64,6 +78,9 @@
                 <option value="REVENUE">Доходы</option>
                 <option value="EXPENSE">Расходы</option>
               </select>
+              <small v-if="editingAccount" style="color: #f59e0b; display: block; margin-top: 4px;">
+                ⚠️ Изменение типа возможно только если у счета нет связанных проводок
+              </small>
             </div>
             <div class="form-group">
               <label>
@@ -86,10 +103,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLayout from '../components/AppLayout.vue';
 import { accountingApi, type Account, type CreateAccountDto } from '../api/accounting.api';
+import { formatApiError } from '../utils/errorHandler';
 
 const route = useRoute();
 const organizationId = computed(() => route.params.organizationId as string);
@@ -101,6 +119,7 @@ const showCreateModal = ref(false);
 const editingAccount = ref<Account | null>(null);
 const submitting = ref(false);
 const formError = ref('');
+const showInactive = ref(false);
 
 const form = ref<CreateAccountDto>({
   code: '',
@@ -121,13 +140,21 @@ onMounted(() => {
   loadAccounts();
 });
 
+// Перезагружаем данные при смене организации
+watch(organizationId, () => {
+  loadAccounts();
+});
+
 const loadAccounts = async () => {
   loading.value = true;
   error.value = '';
   try {
-    accounts.value = await accountingApi.getAccounts(organizationId.value);
+    accounts.value = await accountingApi.getAccounts(
+      organizationId.value,
+      showInactive.value
+    );
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Ошибка загрузки счетов';
+    error.value = formatApiError(err);
   } finally {
     loading.value = false;
   }
@@ -151,7 +178,7 @@ const deleteAccount = async (accountId: string) => {
     await accountingApi.deleteAccount(organizationId.value, accountId);
     await loadAccounts();
   } catch (err: any) {
-    alert(err.response?.data?.message || 'Ошибка удаления счета');
+    error.value = formatApiError(err);
   }
 };
 
@@ -172,7 +199,7 @@ const handleSubmit = async () => {
     closeModal();
     await loadAccounts();
   } catch (err: any) {
-    formError.value = err.response?.data?.message || 'Ошибка сохранения счета';
+    formError.value = formatApiError(err);
   } finally {
     submitting.value = false;
   }
@@ -202,6 +229,27 @@ const closeModal = () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 h1 {
@@ -248,6 +296,11 @@ h1 {
 
 .status-inactive {
   color: #999;
+}
+
+.row-inactive {
+  opacity: 0.7;
+  background-color: #f9f9f9;
 }
 
 .btn-edit,

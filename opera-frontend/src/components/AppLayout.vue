@@ -19,6 +19,13 @@
           >
             Проводки
           </router-link>
+          <router-link
+            v-if="currentOrganizationId"
+            :to="`/organizations/${currentOrganizationId}/reports`"
+            class="nav-link"
+          >
+            Отчеты
+          </router-link>
         </nav>
         <div class="header-actions">
           <select

@@ -23,6 +23,7 @@ export interface CreateAccountDto {
 export interface UpdateAccountDto {
   code?: string;
   name?: string;
+  type?: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
   parentId?: string;
   isActive?: boolean;
 }

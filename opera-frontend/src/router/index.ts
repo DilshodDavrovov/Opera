@@ -34,16 +34,28 @@ const router = createRouter({
       component: () => import('../views/TransactionsView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/organizations/:organizationId/reports',
+      name: 'reports',
+      component: () => import('../views/ReportsView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
   const requiresAuth = to.meta.requiresAuth !== false;
 
-  if (requiresAuth && !authStore.isAuthenticated) {
+  // Проверяем авторизацию из localStorage для более надежной проверки
+  const token = localStorage.getItem('accessToken');
+  const userData = localStorage.getItem('user');
+  const isAuthenticated = !!(token && userData);
+
+  if (requiresAuth && !isAuthenticated) {
+    // Если пытаемся зайти на защищенную страницу без авторизации
     next('/login');
-  } else if (!requiresAuth && authStore.isAuthenticated && (to.path === '/login' || to.path === '/register')) {
+  } else if (!requiresAuth && isAuthenticated && (to.path === '/login' || to.path === '/register')) {
+    // Если авторизованы и пытаемся зайти на страницу логина/регистрации
     next('/');
   } else {
     next();

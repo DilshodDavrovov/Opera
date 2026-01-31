@@ -23,6 +23,11 @@ export interface AuthResponse {
   };
 }
 
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export const authApi = {
   register: async (data: RegisterDto): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', data);
@@ -31,6 +36,13 @@ export const authApi = {
 
   login: async (data: LoginDto): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/login', data);
+    return response.data;
+  },
+
+  refresh: async (refreshToken: string): Promise<RefreshTokenResponse> => {
+    const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh', {
+      refreshToken,
+    });
     return response.data;
   },
 };
