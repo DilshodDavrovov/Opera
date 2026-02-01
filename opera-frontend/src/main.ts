@@ -5,12 +5,16 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/auth'
 import { useOrganizationsStore } from './stores/organizations'
+import { useTabsStore } from './stores/tabs'
 
 const app = createApp(App)
 
 const pinia = createPinia()
 app.use(pinia)
 app.use(router)
+
+// Инициализируем tabs store
+const tabsStore = useTabsStore()
 
 // Инициализация stores после создания pinia
 const authStore = useAuthStore()

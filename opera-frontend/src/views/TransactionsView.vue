@@ -40,10 +40,12 @@
       </table>
 
       <!-- Modal для создания/редактирования -->
-      <div v-if="showCreateModal || editingTransaction" class="modal-overlay" @click="closeModal">
-        <div class="modal-content" @click.stop>
-          <h2>{{ editingTransaction ? 'Изменить проводку' : 'Создать проводку' }}</h2>
-          <form @submit.prevent="handleSubmit">
+      <Modal
+        v-model="isModalOpen"
+        :title="editingTransaction ? 'Изменить проводку' : 'Создать проводку'"
+        @update:modelValue="closeModal"
+      >
+        <form @submit.prevent="handleSubmit">
             <div class="form-group">
               <label>Счет дебета</label>
               <select v-model="form.debitAccountId" required>
@@ -74,16 +76,15 @@
               <label>Дата</label>
               <input v-model="form.date" type="date" required />
             </div>
-            <div v-if="formError" class="error-message">{{ formError }}</div>
-            <div class="modal-actions">
-              <button type="button" @click="closeModal" class="btn-secondary">Отмена</button>
-              <button type="submit" :disabled="submitting" class="btn-primary">
-                {{ submitting ? 'Сохранение...' : 'Сохранить' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+          <div v-if="formError" class="error-message">{{ formError }}</div>
+          <div class="modal-actions">
+            <button type="button" @click="closeModal" class="btn-secondary">Отмена</button>
+            <button type="submit" :disabled="submitting" class="btn-primary">
+              {{ submitting ? 'Сохранение...' : 'Сохранить' }}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   </AppLayout>
 </template>
@@ -92,6 +93,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLayout from '../components/AppLayout.vue';
+import Modal from '../components/Modal.vue';
 import {
   accountingApi,
   type Transaction,
@@ -111,6 +113,15 @@ const showCreateModal = ref(false);
 const editingTransaction = ref<Transaction | null>(null);
 const submitting = ref(false);
 const formError = ref('');
+
+const isModalOpen = computed({
+  get: () => showCreateModal.value || !!editingTransaction.value,
+  set: (value: boolean) => {
+    if (!value) {
+      closeModal();
+    }
+  },
+});
 
 const form = ref<CreateTransactionDto>({
   debitAccountId: '',
@@ -302,34 +313,6 @@ h1 {
 
 .btn-delete:hover {
   background: #dc2626;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-content h2 {
-  margin: 0 0 20px 0;
-  color: #333;
 }
 
 .form-group {

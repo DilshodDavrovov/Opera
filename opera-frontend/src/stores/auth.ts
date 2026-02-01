@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authApi, type RegisterDto, type LoginDto } from '../api/auth.api';
 import router from '../router';
+import { useTabsStore } from './tabs';
 
 let refreshTimer: NodeJS.Timeout | null = null;
 
@@ -59,6 +60,11 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    
+    // Очищаем вкладки при выходе
+    const tabsStore = useTabsStore();
+    tabsStore.clearTabs();
+    
     router.push('/login');
   };
 

@@ -5,6 +5,7 @@ import {
   type Organization,
   type CreateOrganizationDto,
 } from '../api/organizations.api';
+import { useTabsStore } from './tabs';
 
 export const useOrganizationsStore = defineStore('organizations', () => {
   const organizations = ref<Organization[]>([]);
@@ -57,6 +58,10 @@ export const useOrganizationsStore = defineStore('organizations', () => {
   };
 
   const setCurrentOrganization = (organizationId: string) => {
+    // Закрываем все вкладки при смене организации
+    const tabsStore = useTabsStore();
+    tabsStore.clearTabs();
+    
     currentOrganizationId.value = organizationId;
     localStorage.setItem('currentOrganizationId', organizationId);
   };
